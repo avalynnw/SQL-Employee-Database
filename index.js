@@ -3,6 +3,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const cTable = require('console.table');
 const inquirer = require('inquirer');
+// const sequelize = require('sequelize');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -38,25 +39,134 @@ const add_department = [
     }
 ]
 
-
-
-// Connect to database
-const db = mysql.createConnection(
+const add_role = [
     {
-      host: 'localhost',
-      // MySQL username,
-      user: 'root',
-      // MySQL password
-      password: 'password666',
-      database: 'employee_db'
+        type: 'input',
+        message: 'what is the name of the role?',
+        name: 'add_role_name',
     },
-    console.log(`Connected to the classlist_db database.`)
-);
+    {
+        type: 'input',
+        message: 'what is the salary of the role?',
+        name: 'add_role_salary',
+    }
+]
+
+
+
+const config = {
+    host: 'localhost',
+    // MySQL username,
+    user: 'root',
+    // MySQL password
+    password: 'password666',
+    database: 'employee_db'
+}
+
+// function to view employees
+async function viewEmployees () {
+    const db = mysql.createConnection(config);
+    await db.promise().query(`  
+    SELECT 
+    e.id AS id,
+    e.first_name AS first_name,
+    e.last_name AS last_name,
+    r.title AS title,
+    d.name AS department,
+    r.salary AS salary,
+    concat(m.first_name, ' ', m.last_name) AS manager
+    FROM employee e
+    JOIN role AS r ON r.id = e.role_id
+    JOIN department AS d ON d.id = r.department_id
+    LEFT JOIN employee AS m ON e.manager_id = m.id
+    ORDER BY id ASC`)
+    .then(([rows]) => {
+        console.log(" ");
+        console.table(rows);
+    })
+    .catch(error => {
+        throw error;
+    });
+}
+
+// function to view roles
+async function viewRoles() {
+    const db = mysql.createConnection(config);
+    await db.promise().query(`  
+    SELECT 
+    r.id AS id, 
+    r.title AS title, 
+    d.name as department,
+    r.salary AS salary
+    FROM role r
+    JOIN department d on d.id = r.department_id
+    ORDER BY id ASC
+    `)
+    .then(([rows]) => {
+        console.log(" ");
+        console.table(rows);
+    })
+    .catch(error => {
+        throw error;
+    });
+};
+
+
+
+// function to view departments
+async function viewDepartments() {
+    const db = mysql.createConnection(config);
+    await db.promise().query(`  
+    SELECT * FROM department
+    ORDER BY id ASC;`)
+    .then(([rows]) => {
+        console.log(" ");
+        console.table(rows);
+    })
+    .catch(error => {
+        throw error;
+    });
+};
+
+
+
+// function to add a department
+async function addDepartment(input) {
+    const db = mysql.createConnection(config);
+    await db.promise().query(`    
+    INSERT INTO department (name)
+    VALUES ("${input.add_department_name}");`)
+    .then(([rows]) => {
+        console.table(`\nadded ${input.add_department_name} to the database`);
+    })
+    .catch(error => {
+        throw error;
+    });
+};
 
 
 
 
 
+// function to add a role
+async function addRole(input) {
+    const db = mysql.createConnection(config);
+    await db.promise().query(`    
+    INSERT INTO department (name)
+    VALUES ("${input.add_department_name}");`)
+    .then(([rows]) => {
+        console.table(`\nadded ${input.add_department_name} to the database`);
+    })
+    .catch(error => {
+        throw error;
+    });
+};
+
+
+
+
+
+// initialize app
 function init() {
     console.log(`%c
     ┌─┐┌┬┐┌─┐┬  ┌─┐┬ ┬┌─┐┌─┐  ┌┬┐┌─┐┌┬┐┌─┐┌┐ ┌─┐┌─┐┌─┐
@@ -70,93 +180,30 @@ function init() {
 async function menu() {
 
     let menu_option = await inquirer.prompt(menu_list)
-
-    //console.log(menu_option);
     
     if (menu_option.menu_choice == 'view all employees') {
-        db.query(`  SELECT 
-                    e.id AS id,
-                    e.first_name AS first_name,
-                    e.last_name AS last_name,
-                    r.title AS title,
-                    d.name AS department,
-                    r.salary AS salary,
-                    concat(m.first_name, ' ', m.last_name) AS manager
-                    FROM employee e
-                    JOIN role AS r ON r.id = e.role_id
-                    JOIN department AS d ON d.id = r.department_id
-                    LEFT JOIN employee AS m ON e.manager_id = m.id
-                    ORDER BY id ASC`, function (err, results) {
-            if (err) throw err;
-            else{
-                console.log("\n");
-                console.table(results);
-                menu();
-            }
-        });
+        await viewEmployees();
+        menu();
     } 
     if (menu_option.menu_choice == 'view all roles') {
-        db.query(`  SELECT 
-                    r.id AS id, 
-                    r.title AS title, 
-                    d.name as department,
-                    r.salary AS salary
-                    FROM role r
-                    JOIN department d on d.id = r.department_id
-                    ORDER BY id ASC
-                    `, function (err, results) {
-            if (err) throw err;
-            else{
-                console.log("\n");
-                console.table(results);
-                menu();
-            }
-        });
+        await viewRoles();
+        menu();
     } 
     if (menu_option.menu_choice == 'view all departments') {
-        db.query(`  SELECT * FROM department
-                    ORDER BY id ASC;`, function (err, results) {
-            if (err) throw err;
-            else{
-                console.log("\n");
-                console.table(results);
-                menu();
-            }
-        });
-    } 
-    if (menu_option.menu_choice == 'add department') {
-
-        var department_input = await inquirer.prompt(add_department)
-
-        //console.log(department_input.add_department_name);
-
-        db.promise().query(`    INSERT INTO department (name)
-                                VALUES ("${department_input.add_department_name}");`)
-        .then( () => {              
-        console.table(`\nadded ${department_input.add_department_name} to the database`);
+        await viewDepartments();
         menu();
-        });
-
-        // db.query(`  INSERT INTO department (name)
-        //             VALUES ("${department_input.add_department_name}");`, function (err, results) {
-        //     if (err) throw err;
-        //     else{
-        //         console.log(`\nadded ${department_input.add_department_name} to the database`);
-        //         menu();
-        //     }
-        // });
-
-
-
-    } 
-    else {
-        console.log("menu_error")
+    }
+    if (menu_option.menu_choice == 'add department') {
+        var department_input = await inquirer.prompt(add_department)
+        await addDepartment(department_input);
+        menu();
+    }
+    if (menu_option.menu_choice == 'add role') {
+        var role_input = await inquirer.prompt(add_role)
+        await addRole(department_input);
         menu();
     }
 }
-
-
-
 
 
 init()
