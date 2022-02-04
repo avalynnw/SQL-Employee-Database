@@ -130,21 +130,21 @@ async function menu() {
 
         //console.log(department_input.add_department_name);
 
-        // db.promise().query(`    INSERT INTO department (name)
-        //                         VALUES ("${department_input.add_department_name}");`)
-        // .then( () => {              
-        // console.table(`\nadded ${department_input.add_department_name} to the database`);
-        // menu();
-        // });
-
-        db.query(`  INSERT INTO department (name)
-                    VALUES ("${department_input.add_department_name}");`, function (err, results) {
-            if (err) throw err;
-            else{
-                console.log(`\nadded ${department_input.add_department_name} to the database`);
-                menu();
-            }
+        db.promise().query(`    INSERT INTO department (name)
+                                VALUES ("${department_input.add_department_name}");`)
+        .then( () => {              
+        console.table(`\nadded ${department_input.add_department_name} to the database`);
+        menu();
         });
+
+        // db.query(`  INSERT INTO department (name)
+        //             VALUES ("${department_input.add_department_name}");`, function (err, results) {
+        //     if (err) throw err;
+        //     else{
+        //         console.log(`\nadded ${department_input.add_department_name} to the database`);
+        //         menu();
+        //     }
+        // });
 
 
 
