@@ -30,7 +30,7 @@ Seed the database in mysql to start off with:
 
     mysql -u root -p
 
-and enter the set password. Then, run
+in the root directory and enter the set password. Then, run
 
     source db/schema.sql
  
@@ -38,7 +38,11 @@ then run
 
     source db/seeds.sql
 
-to seed the database.
+to seed the database. run 
+
+    quit
+
+to exit the sql shell.
 
 Run the program from the root directory using:
 
