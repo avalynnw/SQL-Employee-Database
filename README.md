@@ -50,6 +50,8 @@ Run the program from the root directory using:
 
 and follow the promts to interact with the database.
 
+![terminal screenshot of application](./assets/application.png)
+
 ## Contributing
 
 Collaborators: Avalynn Helgrave, https://github.com/avalynnw
