@@ -4,6 +4,7 @@ const mysql = require('mysql2');
 const cTable = require('console.table');
 const inquirer = require('inquirer');
 // const sequelize = require('sequelize');
+const db = require('./db/db_connection.js')
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -14,15 +15,6 @@ app.use(express.json());
 
 
 
-const config = {
-    connectionLimit: 10,
-    host: 'localhost',
-    // MySQL username,
-    user: 'root',
-    // MySQL password
-    password: 'password666',
-    database: 'employee_db'
-}
 
 
 // question lists
@@ -76,7 +68,7 @@ const add_role = [
 
 // function to view employees
 async function viewEmployees () {
-    const db = mysql.createConnection(config);
+    // const db = mysql.createConnection(config);
     await db.promise().query(`  
     SELECT 
     e.id AS id,
@@ -102,7 +94,7 @@ async function viewEmployees () {
 
 // function to view roles
 async function viewRoles() {
-    const db = mysql.createConnection(config);
+    // const db = mysql.createConnection(config);
     await db.promise().query(`  
     SELECT 
     r.id AS id, 
@@ -126,7 +118,7 @@ async function viewRoles() {
 
 // function to view all departments
 async function viewDepartments() {
-    const db = mysql.createConnection(config);
+    // const db = mysql.createConnection(config);
     await db.promise().query(`  
     SELECT * FROM department
     ORDER BY id ASC;`)
@@ -143,7 +135,7 @@ async function viewDepartments() {
 
 // function to add a department
 async function addDepartment(input) {
-    const db = mysql.createConnection(config);
+    // const db = mysql.createConnection(config);
     await db.promise().query(`    
     INSERT INTO department (name)
     VALUES ("${input.add_department_name}");`)
@@ -193,7 +185,7 @@ async function addRoleInquirer() {
 
 // add role to database
 async function addRole(response_array) {
-    const db = mysql.createConnection(config);
+    // const db = mysql.createConnection(config);
     await db.promise().query(`    
     INSERT INTO role (title, salary, department_id)
     VALUES ("${response_array[0]}", ${response_array[1]}, ${response_array[2]});`)
@@ -208,7 +200,7 @@ async function addRole(response_array) {
 // return list of departments for use in inquirer prompt
 async function getDepartments() {
     return new Promise((resolve, reject) => {
-        const db = mysql.createConnection(config);
+        // const db = mysql.createConnection(config);
         db.query(`
         SELECT name
         FROM department;`, (err, res) => {
@@ -220,7 +212,7 @@ async function getDepartments() {
 
 async function deptNameByID(department_name) {
     return new Promise((resolve, reject) => {
-        const db = mysql.createConnection(config);
+        // const db = mysql.createConnection(config);
         db.query(`
         SELECT id
         FROM department
@@ -386,10 +378,6 @@ async function menu() {
         console.log(employee_array)
         menu();
     }
-
-
-
-
 
 
 
