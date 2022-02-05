@@ -56,6 +56,8 @@ and follow the promts to interact with the database.
 
 ![terminal screenshot of application](./assets/application.png)
 
+### [Walkthrough Video](https://watch.screencastify.com/v/q5sQFUH5EZwKv4q2JG0w)
+
 ## Contributing
 
 Collaborators: Avalynn Helgrave, https://github.com/avalynnw
