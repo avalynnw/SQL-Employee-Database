@@ -13,6 +13,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 
+
+const config = {
+    host: 'localhost',
+    // MySQL username,
+    user: 'root',
+    // MySQL password
+    password: 'password666',
+    database: 'employee_db'
+}
+
+
 // question lists
 const menu_list = [
     {
@@ -49,19 +60,25 @@ const add_role = [
         type: 'input',
         message: 'what is the salary of the role?',
         name: 'add_role_salary',
+    },
+    {
+        type: 'list',
+        message: 'which department does the role belong to?',
+        name: 'add_role_department',
+        choices: getDepartments()
     }
 ]
 
 
 
-const config = {
-    host: 'localhost',
-    // MySQL username,
-    user: 'root',
-    // MySQL password
-    password: 'password666',
-    database: 'employee_db'
-}
+// const config = {
+//     host: 'localhost',
+//     // MySQL username,
+//     user: 'root',
+//     // MySQL password
+//     password: 'password666',
+//     database: 'employee_db'
+// }
 
 // function to view employees
 async function viewEmployees () {
@@ -113,7 +130,7 @@ async function viewRoles() {
 
 
 
-// function to view departments
+// function to view all departments
 async function viewDepartments() {
     const db = mysql.createConnection(config);
     await db.promise().query(`  
@@ -149,20 +166,62 @@ async function addDepartment(input) {
 
 
 // function to add a role
-async function addRole(input) {
+async function addRole() {
     const db = mysql.createConnection(config);
-    await db.promise().query(`    
-    INSERT INTO department (name)
-    VALUES ("${input.add_department_name}");`)
-    .then(([rows]) => {
-        console.table(`\nadded ${input.add_department_name} to the database`);
-    })
-    .catch(error => {
-        throw error;
+    var department_choices = await getDepartments();
+    console.log(department_choices);
+    return new Promise( (resolve, reject) => {
+        inquirer.prompt([
+            {
+                type: 'input',
+                message: 'what is the name of the role?',
+                name: 'add_role_name',
+            },
+            {
+                type: 'input',
+                message: 'what is the salary of the role?',
+                name: 'add_role_salary',
+            },
+            {
+                type: 'list',
+                message: 'which department does the role belong to?',
+                name: 'add_role_department',
+                choices: department_choices,
+            }
+        ]).then(({ add_role_name, add_role_salary, department_choices}) => {
+            console.log(department_choices)
+        });
     });
+    
+    
+    
+    
+    
+    
+    // await db.promise().query(`    
+    // INSERT INTO role (title, salary)
+    // VALUES ("${input.add_role_name}",${input.add_role_salary}, "${input.add_role_department}");`)
+    // .then(() => {
+    //     console.table(`\nadded ${input.add_role_name} to the database`);
+    // })
+    // .catch(error => {
+    //     throw error;
+    // });
 };
 
 
+// return list of departments for use in inquirer prompt
+async function getDepartments() {
+    return new Promise((resolve, reject) => {
+        const db = mysql.createConnection(config);
+        db.query(`
+        SELECT name
+        FROM department;`, (err, res) => {
+            if (err) reject(err);
+            resolve(res);
+        });
+    });
+}
 
 
 
@@ -199,8 +258,7 @@ async function menu() {
         menu();
     }
     if (menu_option.menu_choice == 'add role') {
-        var role_input = await inquirer.prompt(add_role)
-        await addRole(department_input);
+        await addRole();
         menu();
     }
 }
