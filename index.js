@@ -15,6 +15,7 @@ app.use(express.json());
 
 
 const config = {
+    connectionLimit: 10,
     host: 'localhost',
     // MySQL username,
     user: 'root',
@@ -71,14 +72,7 @@ const add_role = [
 
 
 
-// const config = {
-//     host: 'localhost',
-//     // MySQL username,
-//     user: 'root',
-//     // MySQL password
-//     password: 'password666',
-//     database: 'employee_db'
-// }
+
 
 // function to view employees
 async function viewEmployees () {
@@ -165,11 +159,14 @@ async function addDepartment(input) {
 
 
 
-// function to add a role
-async function addRole() {
-    const db = mysql.createConnection(config);
+// inquirer calls for adding a role
+async function addRoleInquirer() {
     var department_choices = await getDepartments();
-    console.log(department_choices);
+    let department_choices_list = [];
+    department_choices.forEach((item, index) => {
+        let {name: placeholder} = item;
+        department_choices_list.push(placeholder)
+    });
     return new Promise( (resolve, reject) => {
         inquirer.prompt([
             {
@@ -186,29 +183,27 @@ async function addRole() {
                 type: 'list',
                 message: 'which department does the role belong to?',
                 name: 'add_role_department',
-                choices: department_choices,
+                choices: department_choices_list,
             }
-        ]).then(({ add_role_name, add_role_salary, department_choices}) => {
-            console.log(department_choices)
+        ]).then(({ add_role_name, add_role_salary, add_role_department}) => {
+            resolve([add_role_name, add_role_salary, add_role_department]);
         });
     });
-    
-    
-    
-    
-    
-    
-    // await db.promise().query(`    
-    // INSERT INTO role (title, salary)
-    // VALUES ("${input.add_role_name}",${input.add_role_salary}, "${input.add_role_department}");`)
-    // .then(() => {
-    //     console.table(`\nadded ${input.add_role_name} to the database`);
-    // })
-    // .catch(error => {
-    //     throw error;
-    // });
 };
 
+// add role to database
+async function addRole(response_array) {
+    const db = mysql.createConnection(config);
+    await db.promise().query(`    
+    INSERT INTO role (title, salary, department_id)
+    VALUES ("${response_array[0]}", ${response_array[1]}, ${response_array[2]});`)
+    .then(([rows]) => {
+        console.table(`\nadded ${response_array[0]} to the database`);
+    })
+    .catch(error => {
+        throw error;
+    });
+};
 
 // return list of departments for use in inquirer prompt
 async function getDepartments() {
@@ -222,6 +217,121 @@ async function getDepartments() {
         });
     });
 }
+
+async function deptNameByID(department_name) {
+    return new Promise((resolve, reject) => {
+        const db = mysql.createConnection(config);
+        db.query(`
+        SELECT id
+        FROM department
+        WHERE name="${department_name}";`, (err, res) => {
+            if (err) reject(err);
+            resolve(res);
+        });
+    });
+}
+
+
+
+
+
+
+
+// inquirer calls for adding an employee
+async function addEmployeeInquirer() {
+    var role_choices = await getRoles();
+    let role_choices_list = [];
+    role_choices.forEach((item, index) => {
+        let {title: placeholder} = item;
+        role_choices_list.push(placeholder)
+    });
+
+
+
+    var manager_choices = await getManager();
+    console.log(manager_choices);
+    let manager_choices_list = [];
+    manager_choices.forEach((item, index) => {
+        let {"concat(first_name, ' ', last_name)": placeholder} = item;
+        //let placeholder = placeholder_fn + " " + placeholder_ln
+        role_choices_list.push(placeholder)
+    });
+
+
+
+    return new Promise( (resolve, reject) => {
+        inquirer.prompt([
+            {
+                type: 'input',
+                message: "what is the employee's first name?",
+                name: 'add_employee_first_name',
+            },
+            {
+                type: 'input',
+                message: "what is the employee's last name?",
+                name: 'add_employee_last_name',
+            },
+            {
+                type: 'list',
+                message: 'which department does the role belong to?',
+                name: 'add_employee_role',
+                choices: role_choices_list,
+            }
+            ,
+            {
+                type: 'list',
+                message: "who is the employee's manager?",
+                name: 'add_employee_manager',
+                choices: manager_choices_list,
+            }
+        ]).then(({add_employee_first_name, add_employee_last_name, add_employee_role, add_employee_manager}) => {
+
+            resolve([add_employee_first_name, add_employee_last_name, add_employee_role, add_employee_manager]);
+        });
+    });
+};
+
+
+
+
+
+// return list of roles for use in inquirer prompt
+async function getRoles(db) {
+    return new Promise((resolve, reject) => {
+        // const db = mysql.createPool(config);
+        db.query(`
+        SELECT title
+        FROM role;`, (err, res) => {
+            if (err) reject(err);
+            resolve(res);
+        });
+    });
+}
+
+
+// return list of managers for use in inquirer prompt
+async function getManager(db) {
+    return new Promise((resolve, reject) => {
+        // const db = mysql.createPool(config);
+        db.query(`
+        SELECT concat(first_name, ' ', last_name)
+        FROM employee;`, (err, res) => {
+            if (err) reject(err);
+            resolve(res);
+        });
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -258,9 +368,32 @@ async function menu() {
         menu();
     }
     if (menu_option.menu_choice == 'add role') {
-        await addRole();
+        const db = mysql.createPool(config);
+        let role_array = await addRoleInquirer(db);
+        let [{id: role_department_id}] = await deptNameByID(role_array[2]);
+        role_array[1] = parseInt(role_array[1]);
+        role_array[2] = role_department_id;
+        await addRole(db, role_array);
         menu();
     }
+
+
+
+
+
+    if (menu_option.menu_choice == 'add employee') {
+        let employee_array = await addEmployeeInquirer();
+        console.log(employee_array)
+        menu();
+    }
+
+
+
+
+
+
+
+
 }
 
 
