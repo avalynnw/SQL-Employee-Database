@@ -253,7 +253,7 @@ async function addEmployeeInquirer() {
         },
         {
           type: "list",
-          message: "which department does the role belong to?",
+          message: "whatis the employee's role?",
           name: "add_employee_role",
           choices: role_choices_list,
         },
